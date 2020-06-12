@@ -73,10 +73,10 @@ while True:
             if target == tmp[0]:
                 send = "2" + Client_ID + (" " * (32 - len(Client_ID))) + msg
                 if NAT_IP == "":
-                    for data in clist:
-                        tmp = data.split(" ")
-                        if tmp[0] == Client_ID:
-                            NAT_IP = tmp[1]
+                    for e in clist:
+                        t = e.split(" ")
+                        if t[0] == Client_ID:
+                            NAT_IP = t[1]
                             break
                 if NAT_IP == tmp[1]:
                     print("use private ip")
