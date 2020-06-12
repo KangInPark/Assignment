@@ -49,7 +49,7 @@ while True:
         buff = ""
         for data in clist:
             tmp = data.split(" ")
-            buff = buff + "{}\t{}:{}".format(tmp[0], tmp[1], tmp[2])
+            buff = buff + "{}\t{}:{}\n".format(tmp[0], tmp[1], tmp[2])
         print(buff)
         sys.stdout.flush()
     elif mode == "@chat":
