@@ -19,7 +19,7 @@ def receiver():
 
 
 def keep_alive():
-    send = "3" + "keep_alive"
+    send = "3" + Client_ID
     while True:
         time.sleep(10)
         ClientSocket.sendto(send.encode(), (Server_IP, 10080))
