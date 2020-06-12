@@ -25,6 +25,17 @@ def keep_alive():
         ClientSocket.sendto(send.encode(), (Server_IP, 10080))
 
 
+def get_private():
+    tmpsoc = socket(AF_INET, SOCK_DGRAM)
+    try:
+        tmpsoc.connect(('8.8.8.8', 53))
+        ret = tmpsoc.getsockname()[0]
+    except:
+        ret = '0.0.0.0'
+    tmpsoc.close()
+    return ret
+
+
 if len(sys.argv) < 3:
     print("Error: 2개의 인자를 명령행을 통해 입력해야 합니다.(Client ID, Server IP)")
     sys.exit()
@@ -32,9 +43,11 @@ if len(sys.argv) < 3:
 clist = []
 Client_ID = sys.argv[1]
 Server_IP = sys.argv[2]
+Private_IP = get_private()
+NAT_IP = ""
 ClientSocket = socket(AF_INET, SOCK_DGRAM)
 ClientSocket.bind(('', 10081))
-send = "0" + Client_ID
+send = "0" + Client_ID + (" " * (32 - len(Client_ID))) + Private_IP
 ClientSocket.sendto(send.encode(), (Server_IP, 10080))
 th1 = threading.Thread(target=receiver)
 th1.daemon = True
@@ -59,7 +72,18 @@ while True:
             tmp = data.split(" ")
             if target == tmp[0]:
                 send = "2" + Client_ID + (" " * (32 - len(Client_ID))) + msg
-                ClientSocket.sendto(send.encode(), (tmp[1], int(tmp[2])))
+                if NAT_IP == "":
+                    for data in clist:
+                        tmp = data.split(" ")
+                        if tmp[0] == Client_ID:
+                            NAT_IP = tmp[1]
+                            break
+                if NAT_IP == tmp[1]:
+                    print("use private ip")
+                    ClientSocket.sendto(send.encode(), (tmp[3], 10081))
+                else:
+                    print("use public ip")
+                    ClientSocket.sendto(send.encode(), (tmp[1], int(tmp[2])))
                 break
     elif mode == "@exit":
         send = "4" + "unregistration"
