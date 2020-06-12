@@ -1,11 +1,11 @@
 import sys
 import threading
+import time
 from socket import *
 
 
 def receiver():
     global clist
-    print("receiver threading start!\n")
     while True:
         msg, add = ClientSocket.recvfrom(65565)
         # 0:registration 1:list data 2:chat data 3:keep_alive data 4:unregistration
@@ -19,7 +19,10 @@ def receiver():
 
 
 def keep_alive():
-    print("keep_alive threading start!\n")
+    send = "3" + "keep_alive"
+    while True:
+        time.sleep(10)
+        ClientSocket.sendto(send.encode(), (Server_IP, 10080))
 
 
 if len(sys.argv) < 3:
@@ -46,7 +49,7 @@ while True:
         buff = ""
         for data in clist:
             tmp = data.split(" ")
-            buff = buff + "{}\t{}:{}\n".format(tmp[0], tmp[1], tmp[2])
+            buff = buff + "{}\t{}:{}".format(tmp[0], tmp[1], tmp[2])
         print(buff)
         sys.stdout.flush()
     elif mode == "@chat":
