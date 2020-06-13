@@ -79,10 +79,8 @@ while True:
                             NAT_IP = t[1]
                             break
                 if NAT_IP == tmp[1]:
-                    print("use private ip")
                     ClientSocket.sendto(send.encode(), (tmp[3], 10081))
                 else:
-                    print("use public ip")
                     ClientSocket.sendto(send.encode(), (tmp[1], int(tmp[2])))
                 break
     elif mode == "@exit":

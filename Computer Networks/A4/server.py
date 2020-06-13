@@ -10,7 +10,7 @@ def alive_chk():
         tmp = list(alive.items())
         for key, val in tmp:
             if val + 30 < time.time():
-                print("{} is off-line".format(key.split(" ")[0]))
+                print("{} is off-line\t{}:{}".format(key.split(" ")[0], key.split(" ")[1], key.split(" ")[2]))
                 sys.stdout.flush()
                 del alive[key]
                 clist.remove(key)
@@ -34,9 +34,9 @@ while True:
     msg, Add = ServerSocket.recvfrom(65565)
     op = msg.decode()[0]  # 0:registration 1:list data 2:chat data 3:keep_alive data 4:unregistration
     if op == "0":
-        clist.append(msg.decode()[1:] +" " + Add[0] + " " + str(Add[1]))
+        clist.append(msg.decode()[1:33].strip() +" " + Add[0] + " " + str(Add[1]) + " " + msg.decode()[33:])
         alive[clist[-1]] = time.time()
-        print("{}\t{}:{}".format(msg.decode()[1:], Add[0], Add[1]))
+        print("{}\t{}:{}".format(msg.decode()[1:33].strip(), Add[0], Add[1]))
         sys.stdout.flush()
         send = "1" + ",".join(clist)
         for data in clist:
@@ -44,7 +44,7 @@ while True:
             port = int(data.split(" ")[2])
             ServerSocket.sendto(send.encode(),(ip, port))
     elif op == "3":
-        alive[msg.decode()[1:] + " " + Add[0] + " " + str(Add[1])] = time.time()
+        alive[msg.decode()[1:33].strip() +" " + Add[0] + " " + str(Add[1]) + " " + msg.decode()[33:]] = time.time()
     elif op == "4":
         for i in range(0, len(clist)):
             tmp = clist[i].split(" ")
