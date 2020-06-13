@@ -37,7 +37,7 @@ def get_private():
 
 
 if len(sys.argv) < 3:
-    print("Error: 2개의 인자를 명령행을 통해 입력해야 합니다.(Client ID, Server IP)")
+    print("Error: You need 2 argument through the command line.(Client ID, Server IP)")
     sys.exit()
 
 clist = []
@@ -88,6 +88,6 @@ while True:
         ClientSocket.sendto(send.encode(), (Server_IP, 10080))
         break
     else:
-        print("잘못된 입력입니다.\n")
+        print("Invalid input.\n")
         sys.stdout.flush()
 ClientSocket.close()
