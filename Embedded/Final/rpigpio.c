@@ -218,7 +218,6 @@ static irqreturn_t gpio20_irq(int irq, void *dev_id)
 
 static irqreturn_t gpio21_irq(int irq, void *dev_id)
 {
-        print
         if (get_jiffies_64() > irq21_time)
         {
                 irq21_time = get_jiffies_64() + msecs_to_jiffies(100);
