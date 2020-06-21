@@ -9,15 +9,28 @@
 #include <linux/i2c-dev.h>
 #include "data.h"
 #include <pthread.h>
+#include <math.h>
 
 #define SSD1306_I2C_DEV 0x3C
 #define S_WIDTH 128
 #define S_HEIGHT 64
 #define S_PAGES (S_HEIGHT / 8)
+#define FONT_WIDTH 13
+#define FONT_HEIGHT 1
+#define SCORE_X_LOC 14
+#define SCORE_Y_LOC 3
+#define FONT_X_LOC 0
+#define FONT_Y_LOC 0
 #define MAX_MAP_X 10
 #define MAX_MAP_Y 20
 #define MAP_X_LOC 1
 #define MAP_Y_LOC 40
+#define LV_X_LOC 14
+#define LV_Y_LOC 0
+#define MINI_WIDTH 8
+#define MINI_HEIGHT 1
+#define ITEM_X_LOC 28
+#define ITEM_Y_LOC 0
 
 int map[MAX_MAP_X][MAX_MAP_Y];
 int curr[4][4];
@@ -31,10 +44,13 @@ int level = 1;
 int speed = 3000000;
 int cur_i1 = 1;
 int cur_i2 = 1;
+int is_combo = 0;
 int tot_line = 0;
+int score = 0;
 uint8_t *reset;
 uint8_t *data;
 uint8_t *frame;
+uint8_t *fontdata;
 
 pthread_mutex_t mutex_lock;
 
@@ -252,6 +268,57 @@ void update_area_x_wrap(int i2c_fd, const uint8_t *data, int x, int y, int x_len
     }
 }
 
+void print_info()
+{
+    int tmp = score;
+    int *list = (int *)calloc(5, sizeof(int));
+    int index = 0;
+    int lv[2];
+    lv[1] = level / 10;
+    lv[0] = level % 10;
+    while (tmp > 0)
+    {
+        list[index++] = tmp % 10;
+        tmp /= 10;
+    }
+    int cnt = 0;
+    uint8_t *scoredata = (uint8_t *)calloc(8 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
+    uint8_t *lvdata = (uint8_t *)calloc(2 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
+    uint8_t *itemdata = (uint8_t *)calloc(8 * MINI_HEIGHT * MINI_WIDTH, sizeof(uint8_t));
+    int item[8] = {12, 12, 11, 12, 12, 12, 10, 12};
+    item[5] = cur_i1;
+    item[1] = cur_i2;
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            scoredata[i * FONT_WIDTH + j] = font[FONT_WIDTH * list[i] + j];
+        }
+    }
+    for (int i = 0; i < 2; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            lvdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * lv[i] + j];
+        }
+    }
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < MINI_WIDTH; j++)
+        {
+            itemdata[i * MINI_WIDTH + j] = mini[MINI_WIDTH * item[i] + j];
+        }
+    }
+    update_area(i2c_fd, scoredata, SCORE_X_LOC, SCORE_Y_LOC, FONT_WIDTH, 5 * FONT_HEIGHT);
+    update_area(i2c_fd, fontdata, FONT_X_LOC, FONT_Y_LOC, FONT_WIDTH, 8 * FONT_HEIGHT);
+    update_area(i2c_fd, lvdata, LV_X_LOC, LV_Y_LOC, FONT_WIDTH, 2 * FONT_HEIGHT);
+    update_area(i2c_fd, itemdata, ITEM_X_LOC, ITEM_Y_LOC, MINI_WIDTH, 8 * MINI_HEIGHT);
+    free(list);
+    free(scoredata);
+    free(lvdata);
+    free(itemdata);
+}
+
 int chk_map(int x, int y)
 {
     int chk = 1;
@@ -335,6 +402,16 @@ void block_finish()
         }
     }
     int line = chk_line();
+    if (line > 0)
+    {
+        double calc = pow(2, line);
+        if (is_combo)
+            calc *= 1.5;
+        calc *= 1 + 0.05 * cur_i1 + 0.05 * cur_i2;
+        score += (int)calc;
+        print_info();
+    }
+    is_combo = (line > 0) ? 1 : 0;
     update_full_block(i2c_fd);
     tot_line += line;
     if (tot_line >= (level + 1) * 10)
@@ -446,7 +523,7 @@ void gameover()
 {
     printf("Game_Over\n");
     memset(map, 0, sizeof(map));
-    update_full(i2c_fd, frame);
+    update_full(i2c_fd, reset);
 }
 
 void *detect_irq(void *arg)
@@ -533,6 +610,7 @@ int main()
     pthread_create(&th, NULL, detect_irq, NULL);
     reset = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
     frame = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
+    fontdata = (uint8_t *)calloc(5 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
     for (int i = 0; i < S_WIDTH * S_PAGES; i++)
     {
         if (i < S_WIDTH && i % S_WIDTH >= 40 && i % S_WIDTH <= 121)
@@ -542,7 +620,14 @@ int main()
         else if ((i % S_WIDTH == 120 || i % S_WIDTH == 121) && i >= S_WIDTH && i < S_WIDTH * 6)
             frame[i] = 0b11111111;
     }
-    update_full(i2c_fd, frame);
+    int list[8] = {16, 12, 17, 11, 14, 13, 10, 15}; //celorsv_
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            fontdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * list[i] + j];
+        }
+    }
     intro();
     while (1)
     {
@@ -553,7 +638,10 @@ int main()
         cur_i2 = 1;
         level = 1;
         tot_line = 0;
+        score = 0;
         speed = 3000000;
+        update_full(i2c_fd, frame);
+        print_info();
         printf("New Game Start!\n");
         new_block();
         while (!is_over)
@@ -563,7 +651,9 @@ int main()
             down();
             pthread_mutex_unlock(&mutex_lock);
         }
+        pthread_mutex_lock(&mutex_lock);
         gameover();
+        pthread_mutex_unlock(&mutex_lock);
     }
     close(i2c_fd);
     return 0;
