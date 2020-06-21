@@ -92,12 +92,12 @@ struct file_operations rpigpio_fops = {
     .write = rpigpio_write,
 };
 
-unsigned long irq5_time = 0, irq6_time = 0, irq13_time = 0, irq19_time = 0, irq26_time = 0, irq16_time = 0, irq20_time = 0, irq21_time = 0;
+long long irq5_time = 0, irq6_time = 0, irq13_time = 0, irq19_time = 0, irq26_time = 0, irq16_time = 0, irq20_time = 0, irq21_time = 0;
 static irqreturn_t gpio5_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq5_time)
         {
-                irq5_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq5_time = get_jiffies_64() + msecs_to_jiffies(300);
         }
         else
         {
@@ -115,7 +115,7 @@ static irqreturn_t gpio6_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq6_time)
         {
-                irq6_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq6_time = get_jiffies_64() + msecs_to_jiffies(300);
         }
         else
         {
@@ -132,7 +132,7 @@ static irqreturn_t gpio13_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq13_time)
         {
-                irq13_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq13_time = get_jiffies_64() + msecs_to_jiffies(150);
         }
         else
         {
@@ -150,7 +150,7 @@ static irqreturn_t gpio19_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq19_time)
         {
-                irq19_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq19_time = get_jiffies_64() + msecs_to_jiffies(150);
         }
         else
         {
@@ -167,7 +167,7 @@ static irqreturn_t gpio26_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq26_time)
         {
-                irq26_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq26_time = get_jiffies_64() + msecs_to_jiffies(300);
         }
         else
         {
@@ -185,7 +185,7 @@ static irqreturn_t gpio16_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq16_time)
         {
-                irq16_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq16_time = get_jiffies_64() + msecs_to_jiffies(150);
         }
         else
         {
@@ -202,7 +202,7 @@ static irqreturn_t gpio20_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq20_time)
         {
-                irq20_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq20_time = get_jiffies_64() + msecs_to_jiffies(150);
         }
         else
         {
@@ -220,7 +220,7 @@ static irqreturn_t gpio21_irq(int irq, void *dev_id)
 {
         if (get_jiffies_64() > irq21_time)
         {
-                irq21_time = get_jiffies_64() + msecs_to_jiffies(100);
+                irq21_time = get_jiffies_64() + msecs_to_jiffies(150);
         }
         else
         {
