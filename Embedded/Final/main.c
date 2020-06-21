@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <linux/i2c-dev.h>
 #include "data.h"
-#include <time.h>
+#include <pthread.h>
 
 #define SSD1306_I2C_DEV 0x3C
 #define S_WIDTH 128
@@ -22,13 +22,21 @@
 int map[MAX_MAP_X][MAX_MAP_Y];
 int curr[4][4];
 int curr_x = 0, curr_y = 0;
-int curr_type;
+int curr_type, curr_rot;
 int i2c_fd;
+int gpio_fd;
 int init = 0;
 int is_over = 1;
+int level = 1;
+int speed = 3000000;
+int cur_i1 = 1;
+int cur_i2 = 1;
+int tot_line = 0;
 uint8_t *reset;
 uint8_t *data;
 uint8_t *frame;
+
+pthread_mutex_t mutex_lock;
 
 void ssd1306_command(int i2c_fd, uint8_t cmd)
 {
@@ -136,6 +144,18 @@ void update_full_block(int i2c_fd)
     free(res);
 }
 
+void update_frame(int i2c_fd)
+{
+    int8_t *tmp = (int8_t *)malloc(sizeof(int8_t) * 100);
+    memset(tmp, 0b11000000, 100);
+    update_area(i2c_fd, tmp, 40, 0, 82, 1);
+    memset(tmp, 0b00000011, 100);
+    update_area(i2c_fd, tmp, 40, 6, 82, 1);
+    memset(tmp, 0b11111111, 100);
+    update_area(i2c_fd, tmp, 120, 1, 2, 5);
+    free(tmp);
+}
+
 void update_curr_block(int i2c_fd, int x, int y, int x_len, int y_len)
 {
     for (int i = 0; i < 4; i++)
@@ -148,7 +168,7 @@ void update_curr_block(int i2c_fd, int x, int y, int x_len, int y_len)
             }
         }
     }
-    if (x % 2 == 1)
+    if (x % 2 == 1 || x % 2 == -1)
     {
         x -= 1;
         x_len += 1;
@@ -165,7 +185,7 @@ void update_curr_block(int i2c_fd, int x, int y, int x_len, int y_len)
     {
         for (int j = y; j < y + y_len; j++)
         {
-            if (map[i][j] == 1)
+            if (i >= 0 && j >= 0 && i < MAX_MAP_X && j < MAX_MAP_Y && map[i][j] == 1)
             {
                 if (i % 2 == 0)
                     tmp = 0b00001111;
@@ -175,13 +195,6 @@ void update_curr_block(int i2c_fd, int x, int y, int x_len, int y_len)
                 res[(i - x) / 2 * res_y + (j - y) * 4 + 1] |= tmp;
                 res[(i - x) / 2 * res_y + (j - y) * 4 + 2] |= tmp;
                 res[(i - x) / 2 * res_y + (j - y) * 4 + 3] |= tmp;
-            }
-            else if(j>=20){
-                res[(i - x) / 2 * res_y + (j - y) * 4] |= 0b11111111;
-                res[(i - x) / 2 * res_y + (j - y) * 4 + 1] |= 0b11111111;
-            }
-            else if(i==10){
-                res[(i - x) / 2 * res_y + (j - y) * 4] |= 0b00000011;
             }
         }
     }
@@ -194,6 +207,7 @@ void update_curr_block(int i2c_fd, int x, int y, int x_len, int y_len)
     ssd1306_command(i2c_fd, MAP_X_LOC + x / 2);
     ssd1306_command(i2c_fd, MAP_X_LOC + x / 2 + res_x - 1);
     ssd1306_data(i2c_fd, res, res_x * res_y);
+    update_frame(i2c_fd);
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -266,15 +280,21 @@ int chk_map(int x, int y)
 int chk_line()
 {
     int cnt = 0;
-    for(int j = 0 ; j < MAX_MAP_Y; j++){
+    for (int j = 0; j < MAX_MAP_Y; j++)
+    {
         int chk = 1;
-        for(int i = 0 ; i < MAX_MAP_X; i++){
-            if(map[i][j] == 0)chk = 0;
+        for (int i = 0; i < MAX_MAP_X; i++)
+        {
+            if (map[i][j] == 0)
+                chk = 0;
         }
-        if(chk == 1){
-            for(int y = j; y>0;y--){
-                for(int x = 0; x< MAX_MAP_X; x++){
-                    map[x][y] = map[x][y-1];  
+        if (chk == 1)
+        {
+            for (int y = j; y > 0; y--)
+            {
+                for (int x = 0; x < MAX_MAP_X; x++)
+                {
+                    map[x][y] = map[x][y - 1];
                 }
             }
             cnt++;
@@ -286,15 +306,16 @@ int chk_line()
 void new_block()
 {
     curr_type = rand() % 7;
+    curr_rot = 0;
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
-            curr[i][j] = blocks[curr_type][0][i][j];
+            curr[i][j] = blocks[curr_type][curr_rot][i][j];
         }
     }
     curr_x = 3;
-    curr_y = 0;
+    curr_y = -1;
     if (chk_map(curr_x, curr_y) == 0)
         is_over = 1;
     else
@@ -303,32 +324,45 @@ void new_block()
     }
 }
 
+void block_finish()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (curr[i][j] == 1)
+                map[curr_x + i][curr_y + j] = 1;
+        }
+    }
+    int line = chk_line();
+    update_full_block(i2c_fd);
+    tot_line += line;
+    if (tot_line >= (level + 1) * 10)
+    {
+        tot_line -= (level + 1) * 10;
+        level++;
+        speed = (int)(speed * 0.9);
+    }
+    new_block();
+}
+
 void down()
 {
+    if (is_over)
+        return;
     if (chk_map(curr_x, curr_y + 1))
     {
         curr_y++;
         update_curr_block(i2c_fd, curr_x, curr_y - 1, 4, 5);
     }
     else
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                if (curr[i][j] == 1)
-                    map[curr_x + i][curr_y + j] = 1;
-            }
-        }
-        int line = chk_line();
-        update_full_block(i2c_fd);
-        printf("%d\n",line);
-        new_block();
-    }
+        block_finish();
 }
 
 void move(int val)
 {
+    if (is_over)
+        return;
     if (chk_map(curr_x + val, curr_y))
     {
         curr_x += val;
@@ -338,6 +372,64 @@ void move(int val)
             update_curr_block(i2c_fd, curr_x, curr_y, 5, 4);
     }
 }
+
+void rotation(int val)
+{
+    if (is_over)
+        return;
+    int rot = curr_rot + val;
+    if (rot < 0)
+        rot += 4;
+    else if (rot >= 4)
+        rot -= 4;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            curr[i][j] = blocks[curr_type][rot][i][j];
+        }
+    }
+    if (chk_map(curr_x, curr_y))
+    {
+        curr_rot = rot;
+        update_curr_block(i2c_fd, curr_x, curr_y, 4, 4);
+    }
+    else
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                curr[i][j] = blocks[curr_type][curr_rot][i][j];
+            }
+        }
+    }
+}
+
+void drop()
+{
+    if (is_over)
+        return;
+    int tmp = curr_y;
+    while (chk_map(curr_x, curr_y + 1))
+    {
+        curr_y++;
+    }
+    update_curr_block(i2c_fd, curr_x, tmp, 4, 4 + (curr_y - tmp));
+    usleep(100000);
+    block_finish();
+}
+
+void item_1()
+{
+    printf("item1!\n");
+}
+
+void item_2()
+{
+    printf("item2!\n");
+}
+
 void intro()
 {
 }
@@ -345,12 +437,76 @@ void intro()
 void main_menu()
 {
 }
+
+void score_board()
+{
+    printf("score_board\n");
+}
 void gameover()
 {
     printf("Game_Over\n");
     memset(map, 0, sizeof(map));
     update_full(i2c_fd, frame);
 }
+
+void *detect_irq(void *arg)
+{
+    int *buf = (int *)calloc(10, sizeof(int));
+    char cur;
+    while (1)
+    {
+        if (read(gpio_fd, buf, 1) > 0)
+        {
+            if (buf[0] != 0)
+                cur = buf[0];
+            switch (cur)
+            {
+            case '0':
+                pthread_mutex_lock(&mutex_lock);
+                item_1();
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '1':
+                pthread_mutex_lock(&mutex_lock);
+                item_2();
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '2':
+                pthread_mutex_lock(&mutex_lock);
+                rotation(-1);
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '3':
+                pthread_mutex_lock(&mutex_lock);
+                rotation(1);
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '4':
+                pthread_mutex_lock(&mutex_lock);
+                drop();
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '5':
+                pthread_mutex_lock(&mutex_lock);
+                down();
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '6':
+                pthread_mutex_lock(&mutex_lock);
+                move(1);
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            case '7':
+                pthread_mutex_lock(&mutex_lock);
+                move(-1);
+                pthread_mutex_unlock(&mutex_lock);
+                break;
+            }
+        }
+        usleep(10000);
+    }
+}
+
 int main()
 {
     i2c_fd = open("/dev/i2c-1", O_RDWR);
@@ -364,7 +520,17 @@ int main()
         printf("err setting i2c slave address\n");
         return -1;
     }
+    gpio_fd = open("/dev/rpigpio", O_RDWR);
+    if (gpio_fd < 0)
+    {
+        printf("err opening gpio\n");
+        return -1;
+    }
+    write(gpio_fd, "r", 1);
     ssd1306_Init(i2c_fd);
+    pthread_mutex_init(&mutex_lock, NULL);
+    pthread_t th;
+    pthread_create(&th, NULL, detect_irq, NULL);
     reset = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
     frame = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
     for (int i = 0; i < S_WIDTH * S_PAGES; i++)
@@ -383,11 +549,19 @@ int main()
         main_menu();
         srand((unsigned int)time(NULL));
         is_over = 0;
+        cur_i1 = 1;
+        cur_i2 = 1;
+        level = 1;
+        tot_line = 0;
+        speed = 3000000;
+        printf("New Game Start!\n");
         new_block();
         while (!is_over)
         {
-            usleep(300000);
+            usleep(speed);
+            pthread_mutex_lock(&mutex_lock);
             down();
+            pthread_mutex_unlock(&mutex_lock);
         }
         gameover();
     }
