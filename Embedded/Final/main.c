@@ -321,14 +321,14 @@ void update_area_x_wrap(int i2c_fd, const uint8_t *data, int x, int y, int x_len
         free(part2_buf);
     }
 }
-void reset_slow()
+void reset_slow(int n)
 {
     for (int i = 0; i < S_WIDTH; i += 8)
     {
         for (int j = 0; j < S_PAGES; j++)
         {
             update_area(i2c_fd, reset, i, j, 8, 1);
-            usleep(5000);
+            usleep(n);
         }
     }
 }
@@ -614,6 +614,33 @@ void item_2() // 왼쪽 정렬
 
 void intro()
 {
+    is_ani = 1;
+    int8_t *introdata = (int8_t *)calloc(S_PAGES * S_WIDTH, sizeof(int8_t));
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            for (int x = 0; x < S_PAGES; x++)
+            {
+                for (int y = 0; y < S_WIDTH; y++)
+                {
+                    if (x <= j || (x >= S_PAGES - j - 1))
+                    {
+                        if (y < (i + 1) * 16)
+                        {
+                            introdata[x * S_WIDTH + y] = intro_img[x * S_WIDTH + y];
+                            continue;
+                        }
+                    }
+                }
+            }
+            update_full(i2c_fd, introdata);
+            usleep(50000);
+        }
+    }
+    free(introdata);
+    reset_slow(30000);
+    is_ani = 0;
 }
 
 void menu_up()
@@ -722,6 +749,11 @@ void main_menu()
     else if (menu_num == 2)
     {
         update_full(i2c_fd, reset);
+        update_string(i2c_fd, "THANKS", 40, 1);
+        update_string(i2c_fd, "FOR", 60, 3);
+        update_string(i2c_fd, "PLAYING", 80, 1);
+        usleep(2000000);
+        update_full(i2c_fd, reset);
         exit(0);
     }
     is_ani = 0;
@@ -732,7 +764,7 @@ void gameover()
     is_ani = 1;
     printf("Game_Over\n");
     memset(map, 0, sizeof(map));
-    reset_slow();
+    reset_slow(5000);
     usleep(500000);
     update_string(i2c_fd, "GAME", 50, 2);
     update_string(i2c_fd, "OVER", 70, 2);
