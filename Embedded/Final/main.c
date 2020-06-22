@@ -37,6 +37,7 @@ int map[MAX_MAP_X][MAX_MAP_Y];
 int curr[4][4];
 int curr_x = 0, curr_y = 0;
 int curr_type, curr_rot;
+int next_type = -1;
 int i2c_fd;
 int gpio_fd;
 int init = 0;
@@ -349,9 +350,10 @@ void print_info()
     update_string(i2c_fd, "score lv", FONT_X_LOC, FONT_Y_LOC);
     update_string(i2c_fd, lv, LV_X_LOC, LV_Y_LOC);
     uint8_t *itemdata = (uint8_t *)calloc(8 * MINI_HEIGHT * MINI_WIDTH, sizeof(uint8_t));
-    int item[8] = {12, 12, 11, 12, 12, 12, 10, 12};
-    item[5] = cur_i1;
-    item[1] = cur_i2;
+    int item[8] = {12, 12, 12, 12, 11, 12, 12, 10}; // tetrimino : 13~
+    item[6] = cur_i1;
+    item[3] = cur_i2;
+    item[1] = 13 + next_type;
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < MINI_WIDTH; j++)
@@ -416,8 +418,11 @@ int chk_line()
 
 void new_block()
 {
-    curr_type = rand() % 7;
+    if (next_type == -1)
+        next_type = rand() % 7;
+    curr_type = next_type;
     curr_rot = 0;
+    next_type = rand() % 7;
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -432,6 +437,7 @@ void new_block()
     else
     {
         update_curr_block(i2c_fd, curr_x, curr_y, 4, 4);
+        print_info();
     }
 }
 
@@ -998,6 +1004,7 @@ int main()
         tot_line = 0;
         score = 0;
         speed = 3000000;
+        next_type = -1;
         key_mode = 1;
         update_full(i2c_fd, frame);
         print_info();
