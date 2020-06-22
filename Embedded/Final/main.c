@@ -42,18 +42,28 @@ int gpio_fd;
 int init = 0;
 int is_over = 1;
 int is_ani = 0;
+int is_name = 0;
+int is_sel = 0;
 int level = 1;
 int speed = 3000000;
 int cur_i1 = 1;
 int cur_i2 = 1;
 int is_combo = 0;
+int key_mode = 0;
 int tot_line = 0;
 int score = 0;
+int menu_num = 0;
 uint8_t *reset;
 uint8_t *data;
 uint8_t *frame;
-uint8_t *fontdata;
 int font_ds[128];
+char pname[4];
+
+typedef struct rk
+{
+    int s;
+    char *name;
+} Rank;
 
 pthread_mutex_t mutex_lock;
 
@@ -135,11 +145,37 @@ void make_string(int *list, int n, char *s)
     {
         if (s[i] == ' ')
             list[tmp--] = 62;
+        else if (s[i] == ':')
+            list[tmp--] = 63;
+        else if (s[i] == '=')
+            list[tmp--] = 64;
+        else if (s[i] == '#')
+            list[tmp--] = 65;
+        else if (s[i] >= '0' && s[i] <= '9')
+            list[tmp--] = s[i] - '0';
         else if (isupper(s[i]) == 0)
             list[tmp--] = s[i] - 61;
         else
             list[tmp--] = s[i] - 55;
     }
+}
+
+void update_string(int i2c_fd, char *s, int x, int y)
+{
+    int n = strlen(s);
+    int *list = (int *)calloc(n, sizeof(int));
+    make_string(list, n, s);
+    int8_t *stringdata = (int8_t *)calloc(FONT_WIDTH * FONT_HEIGHT * n, sizeof(int8_t));
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            stringdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * list[i] + j];
+        }
+    }
+    update_area(i2c_fd, stringdata, x, y, FONT_WIDTH, FONT_HEIGHT * n);
+    free(list);
+    free(stringdata);
 }
 
 void update_full_block(int i2c_fd)
@@ -284,41 +320,38 @@ void update_area_x_wrap(int i2c_fd, const uint8_t *data, int x, int y, int x_len
         free(part2_buf);
     }
 }
+void reset_slow()
+{
+    for (int i = 0; i < S_WIDTH; i += 8)
+    {
+        for (int j = 0; j < S_PAGES; j++)
+        {
+            update_area(i2c_fd, reset, i, j, 8, 1);
+            usleep(5000);
+        }
+    }
+}
 
 void print_info()
 {
     int tmp = score;
-    int *list = (int *)calloc(5, sizeof(int));
-    int index = 0;
-    int lv[2];
-    lv[1] = level / 10;
-    lv[0] = level % 10;
-    while (tmp > 0)
+    char list[6] = "00000";
+    char lv[3] = "00";
+    lv[0] = (level / 10) + '0';
+    lv[1] = (level % 10) + '0';
+    for (int i = 4; i >= 0; i--)
     {
-        list[index++] = tmp % 10;
+        list[i] = tmp % 10 + '0';
         tmp /= 10;
     }
     int cnt = 0;
-    uint8_t *scoredata = (uint8_t *)calloc(8 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
-    uint8_t *lvdata = (uint8_t *)calloc(2 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
+    update_string(i2c_fd, list, SCORE_X_LOC, SCORE_Y_LOC);
+    update_string(i2c_fd, "score lv", FONT_X_LOC, FONT_Y_LOC);
+    update_string(i2c_fd, lv, LV_X_LOC, LV_Y_LOC);
     uint8_t *itemdata = (uint8_t *)calloc(8 * MINI_HEIGHT * MINI_WIDTH, sizeof(uint8_t));
     int item[8] = {12, 12, 11, 12, 12, 12, 10, 12};
     item[5] = cur_i1;
     item[1] = cur_i2;
-    for (int i = 0; i < 5; i++)
-    {
-        for (int j = 0; j < FONT_WIDTH; j++)
-        {
-            scoredata[i * FONT_WIDTH + j] = font[FONT_WIDTH * list[i] + j];
-        }
-    }
-    for (int i = 0; i < 2; i++)
-    {
-        for (int j = 0; j < FONT_WIDTH; j++)
-        {
-            lvdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * lv[i] + j];
-        }
-    }
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < MINI_WIDTH; j++)
@@ -326,13 +359,7 @@ void print_info()
             itemdata[i * MINI_WIDTH + j] = mini[MINI_WIDTH * item[i] + j];
         }
     }
-    update_area(i2c_fd, scoredata, SCORE_X_LOC, SCORE_Y_LOC, FONT_WIDTH, 5 * FONT_HEIGHT);
-    update_area(i2c_fd, fontdata, FONT_X_LOC, FONT_Y_LOC, FONT_WIDTH, 8 * FONT_HEIGHT);
-    update_area(i2c_fd, lvdata, LV_X_LOC, LV_Y_LOC, FONT_WIDTH, 2 * FONT_HEIGHT);
     update_area(i2c_fd, itemdata, ITEM_X_LOC, ITEM_Y_LOC, MINI_WIDTH, 8 * MINI_HEIGHT);
-    free(list);
-    free(scoredata);
-    free(lvdata);
     free(itemdata);
 }
 
@@ -583,49 +610,207 @@ void intro()
 {
 }
 
-void main_menu()
+void menu_up()
 {
+    if (!is_sel)
+    {
+        if (menu_num > 0)
+        {
+            update_string(i2c_fd, " ", (menu_num + 1) * 20, 6);
+            menu_num--;
+            update_string(i2c_fd, "#", (menu_num + 1) * 20, 6);
+        }
+    }
+}
+
+void menu_down()
+{
+    if (!is_sel)
+    {
+        if (menu_num < 2)
+        {
+            update_string(i2c_fd, " ", (menu_num + 1) * 20, 6);
+            menu_num++;
+            update_string(i2c_fd, "#", (menu_num + 1) * 20, 6);
+        }
+    }
+}
+
+void menu_select()
+{
+    is_sel = 1;
+}
+
+void menu_back()
+{
+    is_sel = 0;
 }
 
 void score_board()
 {
-    printf("score_board\n");
+
+    update_full(i2c_fd, reset);
+    if (access("rank.txt", F_OK) == -1)
+    {
+        update_string(i2c_fd, "NO", 50, 3);
+        update_string(i2c_fd, "DATA", 70, 2);
+    }
+    else
+    {
+        FILE *fd = fopen("rank.txt", "r");
+        int cnt = 0;
+        int tmp = fscanf(fd, "%d", &tmp);
+        while (cnt < 9)
+        {
+            int score;
+            char name[4];
+            fscanf(fd, "%s %d", name, &score);
+            if (score == 0)
+            {
+                break;
+            }
+            char list[6] = "";
+            int index = 0;
+            while (score > 0)
+            {
+                list[index++] = score % 10 + '0';
+                score /= 10;
+            }
+            update_string(i2c_fd, name, cnt * 14, 5);
+            update_string(i2c_fd, list, cnt * 14, 0);
+            cnt++;
+        }
+        fclose(fd);
+    }
+    is_ani = 0;
+    while (is_sel)
+    {
+    }
+    is_ani = 1;
 }
+
+void main_menu()
+{
+    is_ani = 1;
+    key_mode = 0;
+    menu_num = 0;
+    is_sel = 0;
+    update_full(i2c_fd, reset);
+    update_string(i2c_fd, "Start", 20, 1);
+    update_string(i2c_fd, "Score", 40, 1);
+    update_string(i2c_fd, " Exit", 60, 1);
+    update_string(i2c_fd, "==Keys==", 90, 0);
+    update_string(i2c_fd, "U D S B ", 108, 0);
+    update_string(i2c_fd, "#", 20, 6);
+    is_ani = 0;
+    while (!is_sel)
+    {
+    }
+    is_ani = 1;
+    if (menu_num == 1)
+    {
+        score_board();
+        main_menu();
+        return;
+    }
+    else if (menu_num == 2)
+    {
+        update_full(i2c_fd, reset);
+        exit(0);
+    }
+    is_ani = 0;
+}
+
 void gameover()
 {
     is_ani = 1;
     printf("Game_Over\n");
     memset(map, 0, sizeof(map));
-    for (int i = 0; i < S_WIDTH; i += 8)
-    {
-        for (int j = 0; j < S_PAGES; j++)
-        {
-            update_area(i2c_fd, reset, i, j, 8, 1);
-            usleep(5000);
-        }
-    }
+    reset_slow();
     usleep(500000);
-    int glist1[4], glist2[4];
-    make_string(glist1, 4, "GAME");
-    make_string(glist2, 4, "OVER");
-    int8_t* goverdata = (int8_t*)calloc(FONT_WIDTH * FONT_HEIGHT * 4, sizeof(int8_t));
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < FONT_WIDTH; j++)
-        {
-            goverdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * glist1[i] + j];
-        }
-    }
-    update_area(i2c_fd, goverdata, 50, 2, FONT_WIDTH, FONT_HEIGHT * 4);
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < FONT_WIDTH; j++)
-        {
-            goverdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * glist2[i] + j];
-        }
-    }
-    update_area(i2c_fd, goverdata, 70, 2, FONT_WIDTH, FONT_HEIGHT * 4);
+    update_string(i2c_fd, "GAME", 50, 2);
+    update_string(i2c_fd, "OVER", 70, 2);
     usleep(2000000);
+    is_ani = 0;
+}
+
+int comp(const void *a, const void *b)
+{
+    Rank *x = (Rank *)a;
+    Rank *y = (Rank *)b;
+    if (x->s > y->s)
+        return -1;
+    else if (x->s == y->s)
+        return 0;
+    else
+        return 1;
+}
+void add_rank()
+{
+    update_full(i2c_fd, reset);
+    update_string(i2c_fd, "Your", 20, 4);
+    update_string(i2c_fd, "Name:", 35, 3);
+    update_string(i2c_fd, "==Keys==", 75, 0);
+    update_string(i2c_fd, "RESET OK", 90, 0);
+    update_string(i2c_fd, " ABCDEF ", 108, 0);
+    key_mode = 2;
+    is_name = 0;
+    strcpy(pname, "");
+    is_ani = 0;
+    while (!is_name)
+    {
+        char tmp[4];
+        strcpy(tmp, pname);
+        int len = strlen(tmp);
+        for (int i = 0; i < 3 - len; i++)
+        {
+            strcat(tmp, " ");
+        }
+        update_string(i2c_fd, tmp, 35, 0);
+        usleep(100000);
+    }
+    key_mode = 0;
+    is_ani = 1;
+}
+void rank()
+{
+    is_ani = 1;
+    if (access("rank.txt", F_OK) == -1)
+    {
+        creat("rank.txt", 0644);
+    }
+    FILE *fd = fopen("rank.txt", "r+");
+    Rank *r = (Rank *)malloc(sizeof(Rank) * 9);
+    for (int i = 0; i < 9; i++)
+    {
+        r[i].s = 0;
+        r[i].name = (char *)malloc(sizeof(char) * 4);
+        strcpy(r[i].name, "XXX");
+    }
+    int min = -1;
+    fscanf(fd, "%d", &min);
+    for (int i = 0; i < 9; i++)
+    {
+        fscanf(fd, "%s %d", r[i].name, &r[i].s);
+    }
+    fflush(fd);
+    fseek(fd, 0, SEEK_SET);
+    if (min < score)
+    {
+        add_rank();
+        r[8].s = score;
+        strcpy(r[8].name, pname);
+        qsort(r, 9, sizeof(Rank), comp);
+        min = r[8].s;
+    }
+    fprintf(fd, "%d ", min);
+    for (int i = 0; i < 9; i++)
+    {
+        fprintf(fd, "%s %d ", r[i].name, r[i].s);
+    }
+    fclose(fd);
+    free(r);
+    update_full(i2c_fd, reset);
     is_ani = 0;
 }
 
@@ -640,48 +825,125 @@ void *detect_irq(void *arg)
             cur = 0;
             if (buf[0] != 0 && is_ani == 0)
                 cur = buf[0];
-            switch (cur)
+            if (key_mode == 1)
             {
-            case '0':
-                pthread_mutex_lock(&mutex_lock);
-                item_1();
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '1':
-                pthread_mutex_lock(&mutex_lock);
-                item_2();
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '2':
-                pthread_mutex_lock(&mutex_lock);
-                rotation(-1);
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '3':
-                pthread_mutex_lock(&mutex_lock);
-                rotation(1);
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '4':
-                pthread_mutex_lock(&mutex_lock);
-                drop();
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '5':
-                pthread_mutex_lock(&mutex_lock);
-                down();
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '6':
-                pthread_mutex_lock(&mutex_lock);
-                move(1);
-                pthread_mutex_unlock(&mutex_lock);
-                break;
-            case '7':
-                pthread_mutex_lock(&mutex_lock);
-                move(-1);
-                pthread_mutex_unlock(&mutex_lock);
-                break;
+                switch (cur)
+                {
+                case '0':
+                    pthread_mutex_lock(&mutex_lock);
+                    item_1();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '1':
+                    pthread_mutex_lock(&mutex_lock);
+                    item_2();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '2':
+                    pthread_mutex_lock(&mutex_lock);
+                    rotation(-1);
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '3':
+                    pthread_mutex_lock(&mutex_lock);
+                    rotation(1);
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '4':
+                    pthread_mutex_lock(&mutex_lock);
+                    drop();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '5':
+                    pthread_mutex_lock(&mutex_lock);
+                    down();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '6':
+                    pthread_mutex_lock(&mutex_lock);
+                    move(1);
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '7':
+                    pthread_mutex_lock(&mutex_lock);
+                    move(-1);
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                }
+            }
+            else if (key_mode == 2)
+            {
+                switch (cur)
+                {
+                case '0':
+                    strcpy(pname, "");
+                    break;
+                case '1':
+                    is_name = 1;
+                    break;
+                case '2':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "E");
+                    }
+                    break;
+                case '3':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "F");
+                    }
+                    break;
+                case '4':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "A");
+                    }
+                    break;
+                case '5':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "C");
+                    }
+                    break;
+                case '6':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "B");
+                    }
+                    break;
+                case '7':
+                    if (strlen(pname) < 3)
+                    {
+                        strcat(pname, "D");
+                    }
+                    break;
+                }
+            }
+            else if (key_mode == 0)
+            {
+                switch (cur)
+                {
+                case '4':
+                    pthread_mutex_lock(&mutex_lock);
+                    menu_up();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '5':
+                    pthread_mutex_lock(&mutex_lock);
+                    menu_select();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '6':
+                    pthread_mutex_lock(&mutex_lock);
+                    menu_down();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                case '7':
+                    pthread_mutex_lock(&mutex_lock);
+                    menu_back();
+                    pthread_mutex_unlock(&mutex_lock);
+                    break;
+                }
             }
         }
         usleep(10000);
@@ -714,7 +976,6 @@ int main()
     pthread_create(&th, NULL, detect_irq, NULL);
     reset = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
     frame = (uint8_t *)calloc(S_WIDTH * S_PAGES, sizeof(uint8_t));
-    fontdata = (uint8_t *)calloc(5 * FONT_HEIGHT * FONT_WIDTH, sizeof(uint8_t));
     for (int i = 0; i < S_WIDTH * S_PAGES; i++)
     {
         if (i < S_WIDTH && i % S_WIDTH >= 40 && i % S_WIDTH <= 121)
@@ -724,15 +985,7 @@ int main()
         else if ((i % S_WIDTH == 120 || i % S_WIDTH == 121) && i >= S_WIDTH && i < S_WIDTH * 6)
             frame[i] = 0b11111111;
     }
-    int list[8];
-    make_string(list, 8, "score lv");
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < FONT_WIDTH; j++)
-        {
-            fontdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * list[i] + j];
-        }
-    }
+    update_full(i2c_fd, reset);
     intro();
     while (1)
     {
@@ -745,6 +998,7 @@ int main()
         tot_line = 0;
         score = 0;
         speed = 3000000;
+        key_mode = 1;
         update_full(i2c_fd, frame);
         print_info();
         printf("New Game Start!\n");
@@ -759,6 +1013,7 @@ int main()
         pthread_mutex_lock(&mutex_lock);
         gameover();
         pthread_mutex_unlock(&mutex_lock);
+        rank();
     }
     close(i2c_fd);
     return 0;
