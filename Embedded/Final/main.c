@@ -40,6 +40,7 @@ int i2c_fd;
 int gpio_fd;
 int init = 0;
 int is_over = 1;
+int is_ani = 0;
 int level = 1;
 int speed = 3000000;
 int cur_i1 = 1;
@@ -328,7 +329,7 @@ int chk_map(int x, int y)
         {
             if (curr[i][j] == 1)
             {
-                if (x + i >= MAX_MAP_X || y + j >= MAX_MAP_Y || x + i < 0)
+                if (x + i >= MAX_MAP_X || y + j >= MAX_MAP_Y || x + i < 0 || y + j < 0)
                 {
                     chk = 0;
                     break;
@@ -407,18 +408,23 @@ void block_finish()
         double calc = pow(2, line);
         if (is_combo)
             calc *= 1.5;
-        calc *= 1 + 0.05 * cur_i1 + 0.05 * cur_i2;
+        calc *= 1 + 0.2 * cur_i1 + 0.2 * cur_i2;
         score += (int)calc;
         print_info();
     }
     is_combo = (line > 0) ? 1 : 0;
     update_full_block(i2c_fd);
     tot_line += line;
-    if (tot_line >= (level + 1) * 10)
+    if (tot_line >= (level + 1) * 5)
     {
-        tot_line -= (level + 1) * 10;
+        tot_line -= (level + 1) * 5;
         level++;
         speed = (int)(speed * 0.9);
+        if (level % 5 == 0)
+        {
+            cur_i1++;
+            cur_i2++;
+        }
     }
     new_block();
 }
@@ -497,14 +503,64 @@ void drop()
     block_finish();
 }
 
-void item_1()
+void item_1() // 아래 4줄 삭제
 {
-    printf("item1!\n");
+    if (cur_i1 > 0)
+    {
+        cur_i1--;
+        print_info();
+        is_ani = 1;
+        for (int i = 0; i < MAX_MAP_X; i++)
+        {
+            for (int j = MAX_MAP_Y - 4; j < MAX_MAP_Y; j++)
+            {
+                map[i][j] = 0;
+            }
+            update_curr_block(i2c_fd, i, MAX_MAP_Y - 4, 1, 4);
+            usleep(100000);
+        }
+        for (int i = 0; i < MAX_MAP_X; i++)
+        {
+            for (int j = MAX_MAP_Y - 1; j >= 4; j--)
+            {
+                map[i][j] = map[i][j - 4];
+            }
+        }
+        update_curr_block(i2c_fd, 0, 0, MAX_MAP_X, MAX_MAP_Y);
+        is_ani = 0;
+    }
 }
 
-void item_2()
+void item_2() // 왼쪽 정렬
 {
-    printf("item2!\n");
+    if (cur_i2 > 0)
+    {
+        cur_i2--;
+        print_info();
+        is_ani = 1;
+        for (int i = MAX_MAP_Y - 1; i >= 0; i--)
+        {
+            int cnt = 0;
+            for (int j = 0; j < MAX_MAP_X; j++)
+            {
+                if (map[j][i] == 1)
+                    cnt++;
+            }
+            for (int j = MAX_MAP_X - 1; j >= 0; j--)
+            {
+                if (cnt > 0)
+                {
+                    map[j][i] = 1;
+                    cnt--;
+                }
+                else
+                    map[j][i] = 0;
+            }
+            update_curr_block(i2c_fd, 0, i, MAX_MAP_X, 1);
+            usleep(50000);
+        }
+        is_ani = 0;
+    }
 }
 
 void intro()
@@ -534,7 +590,8 @@ void *detect_irq(void *arg)
     {
         if (read(gpio_fd, buf, 1) > 0)
         {
-            if (buf[0] != 0)
+            cur = 0;
+            if (buf[0] != 0 && is_ani == 0)
                 cur = buf[0];
             switch (cur)
             {
