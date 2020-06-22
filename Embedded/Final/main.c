@@ -10,6 +10,7 @@
 #include "data.h"
 #include <pthread.h>
 #include <math.h>
+#include <ctype.h>
 
 #define SSD1306_I2C_DEV 0x3C
 #define S_WIDTH 128
@@ -52,6 +53,7 @@ uint8_t *reset;
 uint8_t *data;
 uint8_t *frame;
 uint8_t *fontdata;
+int font_ds[128];
 
 pthread_mutex_t mutex_lock;
 
@@ -124,6 +126,20 @@ void update_area(int i2c_fd, const uint8_t *data, int x, int y, int x_len, int y
     ssd1306_command(i2c_fd, y);
     ssd1306_command(i2c_fd, y + y_len - 1);
     ssd1306_data(i2c_fd, data, x_len * y_len);
+}
+
+void make_string(int *list, int n, char *s)
+{
+    int tmp = n - 1;
+    for (int i = 0; i < strlen(s); i++)
+    {
+        if (s[i] == ' ')
+            list[tmp--] = 62;
+        else if (isupper(s[i]) == 0)
+            list[tmp--] = s[i] - 61;
+        else
+            list[tmp--] = s[i] - 55;
+    }
 }
 
 void update_full_block(int i2c_fd)
@@ -577,9 +593,40 @@ void score_board()
 }
 void gameover()
 {
+    is_ani = 1;
     printf("Game_Over\n");
     memset(map, 0, sizeof(map));
-    update_full(i2c_fd, reset);
+    for (int i = 0; i < S_WIDTH; i += 8)
+    {
+        for (int j = 0; j < S_PAGES; j++)
+        {
+            update_area(i2c_fd, reset, i, j, 8, 1);
+            usleep(5000);
+        }
+    }
+    usleep(500000);
+    int glist1[4], glist2[4];
+    make_string(glist1, 4, "GAME");
+    make_string(glist2, 4, "OVER");
+    int8_t* goverdata = (int8_t*)calloc(FONT_WIDTH * FONT_HEIGHT * 4, sizeof(int8_t));
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            goverdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * glist1[i] + j];
+        }
+    }
+    update_area(i2c_fd, goverdata, 50, 2, FONT_WIDTH, FONT_HEIGHT * 4);
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < FONT_WIDTH; j++)
+        {
+            goverdata[i * FONT_WIDTH + j] = font[FONT_WIDTH * glist2[i] + j];
+        }
+    }
+    update_area(i2c_fd, goverdata, 70, 2, FONT_WIDTH, FONT_HEIGHT * 4);
+    usleep(2000000);
+    is_ani = 0;
 }
 
 void *detect_irq(void *arg)
@@ -677,7 +724,8 @@ int main()
         else if ((i % S_WIDTH == 120 || i % S_WIDTH == 121) && i >= S_WIDTH && i < S_WIDTH * 6)
             frame[i] = 0b11111111;
     }
-    int list[8] = {16, 12, 17, 11, 14, 13, 10, 15}; //celorsv_
+    int list[8];
+    make_string(list, 8, "score lv");
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < FONT_WIDTH; j++)
