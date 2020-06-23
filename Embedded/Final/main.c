@@ -580,7 +580,7 @@ void item_1() // 아래 4줄 삭제
     }
 }
 
-void item_2() // 왼쪽 정렬
+void item_2() // 왼쪽 아래 정렬
 {
     if (cur_i2 > 0)
     {
@@ -606,7 +606,28 @@ void item_2() // 왼쪽 정렬
                     map[j][i] = 0;
             }
             update_curr_block(i2c_fd, 0, i, MAX_MAP_X, 1);
-            usleep(50000);
+            usleep(30000);
+        }
+        for (int i = MAX_MAP_X - 1; i>=0; i--)
+        {
+            int cnt = 0;
+            for (int j = 0; j < MAX_MAP_Y; j++)
+            {
+                if (map[i][j] == 1)
+                    cnt++;
+            }
+            for (int j = MAX_MAP_Y - 1; j >= 0; j--)
+            {
+                if (cnt > 0)
+                {
+                    map[i][j] = 1;
+                    cnt--;
+                }
+                else
+                    map[i][j] = 0;
+            }
+            update_curr_block(i2c_fd, i, 0, 1, MAX_MAP_Y);
+            usleep(30000);
         }
         is_ani = 0;
     }
@@ -702,12 +723,19 @@ void score_board()
             {
                 break;
             }
+            char tmp[6] = "";
             char list[6] = "";
             int index = 0;
             while (score > 0)
             {
-                list[index++] = score % 10 + '0';
+                tmp[index++] = score % 10 + '0';
                 score /= 10;
+            }
+            int i = 0;
+            index--;
+            while(index>=0)
+            {
+                list[i++] = tmp[index--];
             }
             update_string(i2c_fd, name, cnt * 14, 5);
             update_string(i2c_fd, list, cnt * 14, 0);
@@ -813,6 +841,11 @@ void add_rank()
 void rank()
 {
     is_ani = 1;
+    if(score == 0){
+        update_full(i2c_fd, reset);
+        is_ani = 0;
+        return;
+    }
     if (access("rank.txt", F_OK) == -1)
     {
         creat("rank.txt", 0644);
@@ -825,7 +858,7 @@ void rank()
         r[i].name = (char *)malloc(sizeof(char) * 4);
         strcpy(r[i].name, "XXX");
     }
-    int min = -1;
+    int min = 0;
     fscanf(fd, "%d", &min);
     for (int i = 0; i < 9; i++)
     {
