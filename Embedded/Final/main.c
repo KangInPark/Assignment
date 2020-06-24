@@ -55,9 +55,7 @@ int tot_line = 0;
 int score = 0;
 int menu_num = 0;
 uint8_t *reset;
-uint8_t *data;
 uint8_t *frame;
-int font_ds[128];
 char pname[4];
 
 typedef struct rk
@@ -782,6 +780,7 @@ void main_menu()
         update_string(i2c_fd, "PLAYING", 80, 1);
         usleep(2000000);
         update_full(i2c_fd, reset);
+        close(i2c_fd);
         exit(0);
     }
     is_ani = 0;
