@@ -1,6 +1,7 @@
 # 설명
 Assignment2 - Web Server Imitation
 - Develop a simple web server using socket programming. 
+
 | 파일 명 | 세부 내용 |
 | --- | --- |
 | `main.py`   | Web Server 구현 소스 코드 |
