@@ -1,0 +1,17 @@
+** F/char : function char, F/int : function int 
+name	|	block id	|	type	|	scope		|	block level	|	data size	|	address
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+d	|	2	|	int	|	local		|	1		|	4	|	0
+args	|	2	|	int	|	parameter		|	1		|	4	|	0
+funcM	|	0	|	F/int	|	global		|	0		|	4	|	0
+funcA	|	0	|	F/int	|	global		|	0		|	4	|	21
+main	|	0	|	F/int	|	global		|	0		|	4	|	0
+a	|	0	|	int	|	parameter		|	1		|	4	|	11
+a	|	1	|	int	|	parameter		|	1		|	4	|	0
+a	|	2	|	int	|	local		|	1		|	4	|	0
+c	|	0	|	int	|	local		|	1		|	4	|	0
+c	|	1	|	int	|	local		|	1		|	4	|	0
+c	|	2	|	int	|	local		|	1		|	4	|	0
+b	|	0	|	int	|	parameter		|	1		|	4	|	20
+b	|	1	|	int	|	parameter		|	1		|	4	|	0
+b	|	2	|	int	|	local		|	1		|	4	|	0

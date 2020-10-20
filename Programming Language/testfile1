@@ -1,0 +1,20 @@
+int funcA(a, b)
+{
+	int c;
+	c = a + b;
+}
+int funcM(a, b)
+{
+	int c;
+	c = a * b;	
+}
+int main(args)
+{
+	int a, b, c, d;
+	a = 1;
+	b = 2;
+	c = 3;
+	d = a + b * c; 
+	funcA(a, b);
+	funcM(a, b);
+}

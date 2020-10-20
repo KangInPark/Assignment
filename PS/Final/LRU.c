@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #define HASH_SIZE 10000
 #define HASHING(X) X % HASH_SIZE
@@ -210,6 +211,7 @@ void lRUCacheFree(LRUCache *obj)
     }
     free(obj);
 }
+
 /* main
 LRUCache* obj = new lRUCacheCreate(capacity);
 * int result = lRUCacheGet(obj, key);
@@ -232,90 +234,98 @@ void PrintLRUCache()
 
 int main(int argc, char **argv)
 {
-  if (argc != 2)
-    return 0;
-
-  char filename_out[100] = {};
-  char filename_kv[100] = {};
-  strncpy(filename_out, argv[1], strlen(argv[1]));
-  strncpy(filename_kv, argv[1], strlen(argv[1]));
-  strcat(filename_out, ".out");
-  strcat(filename_kv, ".kv");
-
-  FILE *fop = fopen(filename_out, "r");
-  FILE *fkv = fopen(filename_kv, "r");
-  int *keys = 0;
-  int *values = 0;
-  int num_pairs = -1;
-
-  char *operation = (char *)malloc(sizeof(char) * 100);
-  LRUCache *myCache;
-
-  while (fgets(operation, 100, fop) != NULL)
-  {
-    char *op = strtok(operation, " ");
-    int func = atoi(op);
-    switch (func)
+    if (argc != 2)
+        return 0;
+    int cnt = 0;
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    while (cnt < 1000)
     {
-    case 0:
-    {
-      char *c_size = strtok(NULL, " ");
-      myCache = lRUCacheCreate(atoi(c_size));
-      // Initialize k,v table
-      fscanf(fkv, "%d", &num_pairs);
-      keys = malloc(sizeof(int) * num_pairs);
-      values = malloc(sizeof(int) * num_pairs);
-      for (int i = 0; i < num_pairs; i++)
-      {
-        fscanf(fkv, "%d %d", &keys[i], &values[i]);
-      }
-      break;
-    }
-    case 1:
-    {
-      char *key = strtok(NULL, " ");
-      char *value = strtok(NULL, " ");
+        char filename_out[100] = {};
+        char filename_kv[100] = {};
+        strncpy(filename_out, argv[1], strlen(argv[1]));
+        strncpy(filename_kv, argv[1], strlen(argv[1]));
+        strcat(filename_out, ".out");
+        strcat(filename_kv, ".kv");
 
-      if (printQuery)
-        PutLRUCache(atoi(key), atoi(value));
+        FILE *fop = fopen(filename_out, "r");
+        FILE *fkv = fopen(filename_kv, "r");
+        int *keys = 0;
+        int *values = 0;
+        int num_pairs = -1;
 
-      lRUCachePut(myCache, atoi(key), atoi(value));
-      break;
-    }
-    case 2:
-    {
-      char *key = strtok(NULL, " ");
-      int key_as_num = atoi(key);
-      int value = lRUCacheGet(myCache, key_as_num);
+        char *operation = (char *)malloc(sizeof(char) * 100);
+        LRUCache *myCache;
 
-      if (printQuery)
-        GetLRUCache(key_as_num);
-
-      for (int i = 0; i < num_pairs; i++)
-      {
-        if (keys[i] == key_as_num)
+        while (fgets(operation, 100, fop) != NULL)
         {
-          // Check for correct return. Naive implementation
-          if (value != -1 && value != values[i])
-          {
-            fprintf(stderr, "WRONG ANSWER %d %d %d\n", value, atoi(key), values[i]);
-            return 0;
-          }
-        }
-      }
+            char *op = strtok(operation, " ");
+            int func = atoi(op);
+            switch (func)
+            {
+            case 0:
+            {
+                char *c_size = strtok(NULL, " ");
+                myCache = lRUCacheCreate(atoi(c_size));
+                // Initialize k,v table
+                fscanf(fkv, "%d", &num_pairs);
+                keys = malloc(sizeof(int) * num_pairs);
+                values = malloc(sizeof(int) * num_pairs);
+                for (int i = 0; i < num_pairs; i++)
+                {
+                    fscanf(fkv, "%d %d", &keys[i], &values[i]);
+                }
+                break;
+            }
+            case 1:
+            {
+                char *key = strtok(NULL, " ");
+                char *value = strtok(NULL, " ");
 
-      break;
+                if (printQuery)
+                    PutLRUCache(atoi(key), atoi(value));
+
+                lRUCachePut(myCache, atoi(key), atoi(value));
+                break;
+            }
+            case 2:
+            {
+                char *key = strtok(NULL, " ");
+                int key_as_num = atoi(key);
+                int value = lRUCacheGet(myCache, key_as_num);
+
+                if (printQuery)
+                    GetLRUCache(key_as_num);
+
+                for (int i = 0; i < num_pairs; i++)
+                {
+                    if (keys[i] == key_as_num)
+                    {
+                        // Check for correct return. Naive implementation
+                        if (value != -1 && value != values[i])
+                        {
+                            fprintf(stderr, "WRONG ANSWER %d %d %d\n", value, atoi(key), values[i]);
+                            return 0;
+                        }
+                    }
+                }
+
+                break;
+            }
+            default:
+                fprintf(stderr, "ERROR: WRONG OP\n");
+                return 1;
+            }
+        }
+        fclose(fop);
+        fclose(fkv);
+        free(keys);
+        free(values);
+        lRUCacheFree(myCache);
+        printf("FINISH\n");
+        cnt++;
     }
-    default:
-      fprintf(stderr, "ERROR: WRONG OP\n");
-      return 1;
-    }
-  }
-  fclose(fop);
-  fclose(fkv);
-  free(keys);
-  free(values);
-  lRUCacheFree(myCache);
-  printf("FINISH\n");
-  return 0;
+    gettimeofday(&end, NULL);
+    printf("%ld", (end.tv_sec - start.tv_sec)*1000000 + (end.tv_usec - start.tv_usec));
+    return 0;
 }

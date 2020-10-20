@@ -1,0 +1,134 @@
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h
+AST.o: src/AST.cpp src/AST.h src/SymbolTable.h src/Parser.h src/Lexer.h
+CodeGenerator.o: src/CodeGenerator.cpp src/CodeGenerator.h src/AST.h \
+ src/SymbolTable.h src/Parser.h src/Lexer.h
+Lexer.o: src/Lexer.cpp src/Lexer.h src/SymbolTable.h
+main.o: src/main.cpp src/Lexer.h src/SymbolTable.h src/Parser.h \
+ src/CodeGenerator.h src/AST.h
+Parser.o: src/Parser.cpp src/Parser.h src/Lexer.h src/SymbolTable.h
+SymbolTable.o: src/SymbolTable.cpp src/SymbolTable.h

@@ -1,0 +1,39 @@
+	LD	Reg#0, 1
+	ST	Reg#0, a
+	LD	Reg#0, 10
+	ST	Reg#0, b
+	LD	A_Reg#0, a
+	LD	A_Reg#1, b
+	CALL	funcA, label0
+	LD	A_Reg#0, a
+	LD	A_Reg#1, b
+	CALL	funcM, label1
+	END
+
+label0::	LD	Reg#0, 0
+	ST	Reg#0, c
+	JUMP	label3
+label2::	LD	Reg#0, a
+	LD	Reg#1, 1
+	ADD	Reg#0, Reg#0, Reg#1
+	ST	Reg#0, a
+label3::	LD	Reg#0, a
+	LD	Reg#1, b
+	LT	Reg#0, Reg#1, REG#0
+	JUMPT	Reg#0  label2
+	JUMP	Return_Adress
+
+label1::	LD	Reg#0, a
+	LD	Reg#1, b
+	LT	Reg#0, Reg#1, REG#0
+	JUMPT	Reg#0  label4
+	LD	Reg#0, b
+	ST	Reg#0, c
+	JUMP	label5
+label4::	LD	Reg#0, a
+	ST	Reg#0, c
+label5::	JUMP	Return_Adress
+
+
+Number of using Registers : 4
+[Reg: 2 // AReg: 2]

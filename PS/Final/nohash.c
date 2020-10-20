@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define ULL_MAX 0xffffffffffffffff
 
@@ -8,7 +9,7 @@ int printQuery = 0;        // 1-> true, 0-> false 채점시 0
 int printCurrentCache = 1; // 1-> true, 0-> false 채점시 1 IRUCacheGet의 리턴값을 출력함.
 int LRU_cnt = 0;
 int cap = 0;
-unsigned long long time = 0;
+unsigned long long timet = 0;
 
 typedef struct LRUCache
 {
@@ -44,9 +45,9 @@ int comp2(const void *a, const void *b)
 void time_reset(LRUCache *obj)
 {
     qsort(obj, LRU_cnt, sizeof(LRUCache), comp1);
-    time = 0;
+    timet = 0;
     for (int i = 0; i < LRU_cnt; i++)
-        obj[i].time = time++;
+        obj[i].time = timet++;
     qsort(obj, LRU_cnt, sizeof(LRUCache), comp2);
 }
 
@@ -67,11 +68,11 @@ int lRUCacheGet(LRUCache *obj, int key)
     }
     else
     {
-        target->time = time;
-        if (time == ULL_MAX)
+        target->time = timet;
+        if (timet == ULL_MAX)
             time_reset(obj);
         else
-            time++;
+            timet++;
         return target->value;
     }
 }
@@ -81,18 +82,18 @@ void lRUCachePut(LRUCache *obj, int key, int value)
     LRUCache *target = bsearch(&key, obj, LRU_cnt, sizeof(LRUCache), comp2);
     if (target != NULL)
     {
-        target->time = time;
-        if (time == ULL_MAX)
+        target->time = timet;
+        if (timet == ULL_MAX)
             time_reset(obj);
         else
-            time++;
+            timet++;
         return;
     }
     if (LRU_cnt < cap)
     {
         obj[LRU_cnt].key = key;
         obj[LRU_cnt].value = value;
-        obj[LRU_cnt].time = time++;
+        obj[LRU_cnt].time = timet++;
         LRU_cnt++;
         qsort(obj, LRU_cnt, sizeof(LRUCache), comp2);
     }
@@ -101,11 +102,11 @@ void lRUCachePut(LRUCache *obj, int key, int value)
         qsort(obj, LRU_cnt, sizeof(LRUCache), comp1);
         obj[0].key = key;
         obj[0].value = value;
-        obj[0].time = time;
-        if (time == ULL_MAX)
+        obj[0].time = timet;
+        if (timet == ULL_MAX)
             time_reset(obj);
         else
-            time++;
+            timet++;
         qsort(obj, LRU_cnt, sizeof(LRUCache), comp2);
     }
 }
@@ -113,19 +114,4 @@ void lRUCachePut(LRUCache *obj, int key, int value)
 void lRUCacheFree(LRUCache *obj)
 {
     free(obj);
-}
-
-void GetLRUCache(int key)
-{
-    printf("GET (%d)\n", key);
-}
-
-void PutLRUCache(int key, int value)
-{
-    printf("PUT (%d,%d)\n", key, value);
-}
-
-void PrintLRUCache()
-{
-    printf("Print Cache\n");
 }

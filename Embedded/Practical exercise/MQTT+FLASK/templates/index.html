@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MQTT-FLASK Assignment</title>
+        <style>
+            .switch
+            {
+		display: inline-block;
+                background-color: gold;
+                text-align: center;
+                font-weight: bold;
+                font-size: 2rem;
+		width: 20rem;
+		height: 3rem;
+		margin: 1rem;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Tact switches Counting</h1>
+        <div class="switch">{{sw1}}</div>
+        <div class="switch">{{sw2}}</div><br><br>
+        <button type="button" onclick="location.href='./reset'">Reset</button>
+    </body>
+</html>

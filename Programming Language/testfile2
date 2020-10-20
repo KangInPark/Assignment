@@ -1,0 +1,30 @@
+int funcA(a, b)
+{
+	int c;
+	c = 0;
+	WHILE a > b
+	{
+		a = a + 1;
+		c = c + a;
+	}
+}
+int funcM(a, b)
+{
+	int c;
+	IF a > b THEN
+	{
+		c = a;
+	}	
+	ELSE
+	{
+		c = b;
+	}
+}
+int main(args)
+{
+	int a, b;
+	a = 1;
+	b = 10;
+	funcA(a, b);
+	funcM(a, b);
+}
